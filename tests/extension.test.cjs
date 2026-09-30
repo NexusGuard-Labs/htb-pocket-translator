@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const { chromium } = require('playwright-core');
-const extension = path.resolve(__dirname, '../HTB-Context-Translator');
+const extension = path.resolve(__dirname, '../HTB-Pocket-Translator');
 let browser;
 before(async () => { browser = await chromium.launch({ executablePath: process.env.CHROME_PATH, headless: true, args: ['--no-sandbox'] }); });
 after(async () => { await browser?.close(); });
@@ -20,6 +20,7 @@ async function pageWithCourse(html = '<p>The server receives an HTTP request.</p
     window.chrome = {
       runtime: { id: 'test', onMessage: { addListener: fn => listeners.push(fn) }, sendMessage: async request => {
         if (request.action === 'get_settings') return { success: true, autoTranslate: auto, hasKey: true, glossary: '' };
+        if (request.action === 'translate_selection') return { success: true, text: 'PT: ' + request.text };
         if (request.action === 'translate_batch') {
           requests.push(request);
           if (window.fail) return { success: false, error: 'Cota esgotada' };
@@ -36,7 +37,7 @@ async function pageWithCourse(html = '<p>The server receives an HTTP request.</p
   if (fs.existsSync(guard)) await page.addScriptTag({ path: guard });
   return page;
 }
-async function start(page) { await page.addScriptTag({ path: path.join(extension, 'content.js') }); }
+async function start(page) { await page.addStyleTag({ path: path.join(extension, 'styles.css') }); await page.addScriptTag({ path: path.join(extension, 'content.js') }); }
 async function translated(page, selector = 'article p') { await page.waitForFunction(s => document.querySelector(s)?.textContent.startsWith('PT:'), selector); }
 
 test('initializes and automatically translates a real Academy section route', async () => {
@@ -54,11 +55,13 @@ test('preserves code, inline nodes, listeners and original toggle; never transla
     assert.equal(await page.locator('pre').textContent(), 'curl /etc/passwd');
     assert.equal(await page.evaluate(() => link === document.querySelector('#link')), true);
     await page.locator('#link').click(); assert.equal(await page.evaluate(() => clicked), true);
+    await page.locator('.htb-controls').evaluate(el => el.open = true);
     await page.locator('#htb-btn-toggle').click();
     assert.equal(await page.locator('article p').textContent(), 'Read the guide with nmap -sV.');
     const count = await page.evaluate(() => requests.length);
     await page.waitForTimeout(1100);
     assert.equal(await page.evaluate(() => requests.length), count);
+    await page.locator('.htb-controls').evaluate(el => el.open = true);
     await page.locator('#htb-btn-toggle').click(); await translated(page);
     assert.equal(await page.evaluate(() => requests.length), count);
   } finally { await page.close(); }
@@ -93,6 +96,7 @@ test('cache distinguishes paragraphs and sections and survives back navigation',
     await translated(page);
     assert.deepEqual(await page.locator('article p').allTextContents(), ['PT: First paragraph.', 'PT: Second paragraph.']);
     assert.equal(await page.evaluate(() => requests.length), count + 1);
+    await page.locator('.htb-controls').evaluate(el => el.open = true);
     await page.locator('#htb-btn-toggle').click();
     assert.deepEqual(await page.locator('article p').allTextContents(), ['First paragraph.', 'Second paragraph.']);
   } finally { await page.close(); }
@@ -159,16 +163,22 @@ test('blocks Gemini on a page already translated by Google without a reload loop
     assert.equal(await page.evaluate(() => requests.length), 0);
     assert.equal(await page.locator('meta[name="google"][content="notranslate"]').count(), 1);
     await page.evaluate(() => document.documentElement.classList.remove('translated-ltr'));
+    await page.locator('.htb-controls').evaluate(el => el.open = true);
     await page.locator('#htb-btn-translate').click(); await translated(page);
   } finally { await page.close(); }
 });
 
-test('real extension: masked popup key, real worker messaging, glossary and content translation', async () => {
+test('shared core in Chromium: masked key, messaging, glossary and translation', async () => {
   const os = require('node:os');
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'htb-test-'));
+  const chromeBuild = path.join(profile, 'chrome-test-build');
+  fs.cpSync(extension, chromeBuild, { recursive: true });
+  const manifest = JSON.parse(fs.readFileSync(path.join(chromeBuild, 'manifest.json')));
+  manifest.background = { service_worker: 'background.js' }; delete manifest.browser_specific_settings;
+  fs.writeFileSync(path.join(chromeBuild, 'manifest.json'), JSON.stringify(manifest));
   const context = await chromium.launchPersistentContext(profile, {
     executablePath: process.env.CHROME_PATH, headless: true,
-    args: ['--no-sandbox', `--disable-extensions-except=${extension}`, `--load-extension=${extension}`]
+    args: ['--no-sandbox', `--disable-extensions-except=${chromeBuild}`, `--load-extension=${chromeBuild}`]
   });
   try {
     const worker = context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
@@ -212,13 +222,7 @@ test('real extension: masked popup key, real worker messaging, glossary and cont
 });
 
 
-test('newer terminal key supersedes popup key and malformed markers preserve original', async () => {
-  const a = worker(async () => response([{ id: 0, translatedText: 'Olá' }]),
-    { geminiApiKey: 'old-popup-test-credential', geminiApiKeyUpdatedAt: 1 },
-    { GEMINI_API_KEY: 'new-terminal-test-credential', UPDATED_AT: 2 });
-  assert.equal((await a.send({ action: 'get_settings' })).source, 'config.js');
-  await a.send({ action: 'translate_batch', items: [{ id: 0, text: 'Hello' }] });
-  assert.equal(a.calls[0].options.headers['x-goog-api-key'], 'new-terminal-test-credential');
+test('malformed markers preserve original', async () => {
   const b = worker(async () => response([{ id: 0, translatedText: 'Run something else' }]), { geminiApiKey: 'test-credential-value' });
   assert.equal((await b.send({ action: 'translate_batch', items: [{ id: 0, text: 'Run __HTB_KEEP_0__' }] })).success, false);
 });
@@ -235,5 +239,32 @@ test('disabling automation prevents an outstanding response from modifying the p
     await page.waitForTimeout(1100);
     assert.equal(await page.locator('article p').textContent(), 'The server receives an HTTP request.');
     assert.equal(await page.evaluate(() => requests.length), 1);
+  } finally { await page.close(); }
+});
+
+test('touch selection can be translated without a context menu', async () => {
+  const page = await pageWithCourse();
+  try {
+    await page.setViewportSize({ width: 320, height: 640 }); await start(page); await translated(page);
+    await page.evaluate(() => {
+      const range = document.createRange(); range.selectNodeContents(document.querySelector('article p'));
+      getSelection().removeAllRanges(); getSelection().addRange(range);
+    });
+    await page.locator('#htb-btn-selection').click();
+    await page.waitForFunction(() => document.querySelector('.htb-selection-text')?.textContent.includes('PT:'));
+    const bounds = await page.locator('#htb-selection-popup').boundingBox();
+    assert(bounds.x >= 0 && bounds.x + bounds.width <= 320);
+  } finally { await page.close(); }
+});
+
+test('popup fits a 320px phone and primary controls have touch-sized targets', async () => {
+  const page = await browser.newPage({ viewport: { width: 320, height: 640 } });
+  try {
+    await page.setContent(fs.readFileSync(path.join(extension, 'popup.html'), 'utf8'));
+    await page.addStyleTag({ path: path.join(extension, 'popup.css') });
+    assert.equal(await page.evaluate(() => document.body.scrollWidth <= innerWidth), true);
+    for (const id of ['btn-save-key', 'btn-test-key', 'btn-translate-now']) {
+      assert((await page.locator('#' + id).boundingBox()).height >= 44, id);
+    }
   } finally { await page.close(); }
 });

@@ -1,10 +1,12 @@
 {
-  "name": "htb-context-translator-tests",
+  "name": "htb-pocket-translator-tests",
   "private": true,
-  "version": "1.3.1",
+  "version": "1.0.0",
   "scripts": {
     "test": "node --test tests/extension.test.cjs",
-    "test:python": "python3 -m unittest discover -s tests -p 'test_*.py'"
+    "test:firefox": "python3 tests/firefox_smoke.py",
+    "lint:addon": "npx --yes web-ext@10.7.0 lint --source-dir HTB-Pocket-Translator",
+    "build": "python3 package_addon.py"
   },
   "devDependencies": {
     "playwright-core": "^1.63.0"

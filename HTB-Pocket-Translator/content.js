@@ -1,6 +1,7 @@
 // O DOM do curso é preservado: somente nós de texto recebem traduções.
 (() => {
   'use strict';
+  const api = globalThis.browser || globalThis.chrome;
   if (globalThis.__htbTranslatorLoaded) return;
   globalThis.__htbTranslatorLoaded = true;
   const BLOCKS = 'h1,h2,h3,h4,h5,h6,p,li,blockquote,td,th,figcaption';
@@ -34,7 +35,7 @@
   }
   async function message(data) {
     try {
-      const result = await chrome.runtime.sendMessage(data);
+      const result = await api.runtime.sendMessage(data);
       if (!result?.success) throw new Error(result?.error || 'Sem resposta da extensão. Recarregue esta página.');
       return result;
     } catch (error) {
@@ -66,7 +67,7 @@
   }
   function cancel() {
     generation++;
-    if (running) chrome.runtime.sendMessage({ action: 'cancel_translation' }).catch(() => {});
+    if (running) api.runtime.sendMessage({ action: 'cancel_translation' }).catch(() => {});
     running = null;
     clearTimeout(timer);
   }
@@ -229,11 +230,40 @@
   async function init() {
     widget = document.createElement('div'); widget.id = 'htb-translator-widget'; widget.hidden = !isLesson();
     widget.innerHTML = `<div class="htb-trans-card">
-      <div class="htb-trans-header"><span class="htb-trans-title">🛡️ HTB Translator AI</span></div>
+      <div class="htb-trans-header"><span class="htb-trans-title">🛡️ HTB Pocket</span></div>
       <div id="htb-status-badge" class="htb-trans-badge" role="status" aria-live="polite">Pronto</div>
       <div class="htb-trans-actions"><button id="htb-btn-translate" class="htb-btn-primary">Traduzir / tentar novamente</button>
       <button id="htb-btn-toggle" class="htb-btn-secondary" hidden><span id="htb-toggle-text">Ver Original (EN)</span></button></div>
       <label class="htb-trans-checkbox-label htb-trans-toggle-row"><input type="checkbox" id="htb-auto-check" checked>Auto-traduzir ao avançar e voltar</label></div>`;
+    const controls = document.createElement('details');
+    controls.className = 'htb-controls';
+    const summary = document.createElement('summary'); summary.textContent = 'Opções de tradução';
+    controls.append(summary, widget.querySelector('.htb-trans-actions'), widget.querySelector('.htb-trans-toggle-row'));
+    widget.querySelector('.htb-trans-card').append(controls);
+    const selectionButton = document.createElement('button');
+    selectionButton.id = 'htb-btn-selection'; selectionButton.className = 'htb-btn-primary';
+    selectionButton.textContent = 'Traduzir seleção'; selectionButton.hidden = true;
+    widget.querySelector('.htb-trans-card').append(selectionButton);
+    let selectedText = '', selectedContext = '';
+    document.addEventListener('selectionchange', () => {
+      const selected = window.getSelection();
+      const parent = selected?.anchorNode?.parentElement;
+      const text = selected?.toString().trim() || '';
+      if (text && parent && container()?.contains(parent) && !parent.closest('#htb-translator-widget,#htb-selection-popup')) {
+        selectedText = text; selectedContext = originalContext(parent.closest(BLOCKS) || parent);
+        selectionButton.hidden = false;
+      } else if (!text) selectionButton.hidden = true;
+    });
+    selectionButton.onpointerdown = event => event.preventDefault();
+    selectionButton.onclick = async () => {
+      if (!selectedText || guard?.isTranslated()) return;
+      const selectedRoute = routeKey(); selectionButton.disabled = true; selection('Traduzindo seleção...');
+      try {
+        const result = await message({ action: 'translate_selection', text: selectedText, context: selectedContext });
+        if (selectedRoute === routeKey()) selection(result.text);
+      } catch (error) { if (selectedRoute === routeKey()) selection(error.message); }
+      finally { selectionButton.disabled = false; }
+    };
     document.body.append(widget);
     widget.querySelector('#htb-btn-translate').onclick = () => void translatePage(true);
     widget.querySelector('#htb-btn-toggle').onclick = toggleLanguage;
@@ -264,8 +294,8 @@
     }, 500);
     window.addEventListener('popstate', () => { checkRoute(); });
     window.addEventListener('pageshow', () => { checkRoute(); schedule(); });
-    chrome.runtime.onMessage.addListener((request, sender, respond) => {
-      if (sender.id !== chrome.runtime.id) return false;
+    api.runtime.onMessage.addListener((request, sender, respond) => {
+      if (sender.id !== api.runtime.id) return false;
       if (request.action === 'trigger_translate') {
         if (!isLesson()) { respond({ success: false, error: 'Abra uma seção de curso do HTB Academy.' }); return false; }
         void translatePage(true); respond({ success: true });

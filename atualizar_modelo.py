@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import re
 
-MODELS_PATH = Path(__file__).resolve().parent / 'HTB-Context-Translator' / 'models.json'
+MODELS_PATH = Path(__file__).resolve().parent / 'HTB-Pocket-Translator' / 'models.json'
 
 
 def main():
