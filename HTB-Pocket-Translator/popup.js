@@ -1,4 +1,5 @@
 'use strict';
+const api = globalThis.browser || globalThis.chrome;
 document.addEventListener('DOMContentLoaded', async () => {
   const input = document.getElementById('api-key-input');
   const visibility = document.getElementById('toggle-visibility');
@@ -22,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (typeof settings.glossary === 'string') document.getElementById('glossary-input').value = settings.glossary;
   }
   async function message(request) {
-    const result = await chrome.runtime.sendMessage(request);
+    const result = await api.runtime.sendMessage(request);
     if (!result?.success) throw new Error(result?.error || 'Sem resposta da extensão. Recarregue a extensão.');
     return result;
   }
@@ -65,10 +66,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
   translate.onclick = async () => {
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const [tab] = await api.tabs.query({ active: true, currentWindow: true });
       if (!tab?.url || new URL(tab.url).origin !== 'https://academy.hackthebox.com') throw new Error('Abra uma seção de curso do HTB Academy.');
       let result;
-      try { result = await chrome.tabs.sendMessage(tab.id, { action: 'trigger_translate' }); }
+      try { result = await api.tabs.sendMessage(tab.id, { action: 'trigger_translate' }); }
       catch { throw new Error('Recarregue a página do HTB para conectar a extensão.'); }
       if (!result?.success) throw new Error(result?.error || 'Não foi possível iniciar a tradução.');
       window.close();
@@ -83,7 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) { show(error.message, 'error'); }
     finally { button.disabled = false; }
   };
-  chrome.runtime.onMessage.addListener(request => {
+  api.runtime.onMessage.addListener(request => {
     if (['preferences_updated', 'api_key_updated', 'glossary_updated'].includes(request.action)) render(request);
   });
   try { render(await message({ action: 'get_settings' })); }

@@ -1,4 +1,4 @@
-/* HTB Context Translator - Popup Styles */
+/* HTB Pocket Translator - Popup Styles */
 
 * {
   margin: 0;
@@ -7,7 +7,8 @@
 }
 
 body {
-  width: 350px;
+  width: min(100vw, 420px);
+  min-width: 280px;
   background-color: #0b101d;
   color: #e2e8f0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -381,3 +382,14 @@ input:checked + .slider:before {
   padding-top: 4px;
   border-top: 1px solid #1e293b;
 }
+
+/* Controles de toque e texto legível sem zoom automático do campo. */
+button, .btn, .btn-icon { min-height: 44px; }
+.btn-icon { min-width: 44px; }
+.input-group input, textarea { min-height: 44px; font-size: 16px; }
+.input-group input { padding-right: 54px; }
+.card-label, .toggle-desc, .feedback-box, .toggle-title { font-size: 12px; }
+.switch { width: 48px; height: 44px; }
+.slider { top: 10px; bottom: 10px; }
+input:checked + .slider:before { transform: translateX(26px); }
+.switch input:focus-visible + .slider, button:focus-visible { outline: 2px solid #9fef00; outline-offset: 2px; }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HTB Context Translator</title>
+  <title>HTB Pocket Translator</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
@@ -13,8 +13,8 @@
       <div class="brand">
         <span class="logo-icon">🛡️</span>
         <div>
-          <h1>HTB Translator</h1>
-          <span class="subtitle">Contextual AI • v1.3.1</span>
+          <h1>HTB Pocket</h1>
+          <span class="subtitle">Firefox Android • v1.0.0</span>
         </div>
       </div>
       <span id="header-status-badge" class="badge badge-idle">Pronto</span>
@@ -37,7 +37,7 @@
           type="password"
           id="api-key-input" aria-label="Nova chave de API"
           placeholder="Insira sua chave (AIzaSy...)"
-          autocomplete="off"
+          autocomplete="off" autocapitalize="none" autocorrect="off"
           spellcheck="false"
         >
         <button type="button" id="toggle-visibility" aria-label="Mostrar chave" aria-pressed="false" class="btn-icon" title="Mostrar/Ocultar caracteres">

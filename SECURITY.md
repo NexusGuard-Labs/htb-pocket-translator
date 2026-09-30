@@ -1,32 +1,25 @@
-# Segurança e privacidade — HTB Context Translator
+# Privacidade e segurança
 
-Organização responsável: [NexusGuard-Labs](https://github.com/NexusGuard-Labs). Owner: [Mid-night2026](https://github.com/Mid-night2026). A linha em revisão é a 1.3.1; use a versão mais recente disponibilizada pela organização.
+Responsável: [NexusGuard-Labs](https://github.com/NexusGuard-Labs). Owner: [Mid-night2026](https://github.com/Mid-night2026).
 
-## Chaves pessoais
+## Dados utilizados
 
-Cada usuário fornece sua própria chave Gemini, inclusive o owner. A extensão não distribui uma chave compartilhada da organização. O popup mantém o campo mascarado e não mostra partes da chave salva. Isso protege a exibição, **não criptografa o armazenamento**: alguém com acesso ao perfil do navegador ou ao arquivo local pode inspecioná-la.
+Cada usuário configura sua própria chave Gemini. Ela fica no armazenamento local do perfil do Firefox e é enviada por HTTPS no cabeçalho `x-goog-api-key` para `generativelanguage.googleapis.com`.
 
-A chave fica no `chrome.storage.local` do perfil, com acesso limitado aos contextos da extensão por `setAccessLevel(TRUSTED_CONTEXTS)`, ou em `config.js` ignorado pelo Git. O script de terminal grava esse arquivo atomicamente com permissão `600`. A configuração mais recente entre popup e script prevalece após recarregar a extensão.
+A tradução também envia ao Google os fragmentos selecionados ou da seção, o contexto necessário do parágrafo e os termos do glossário. O manifesto declara transmissão de conteúdo de sites e informações de autenticação. A extensão não envia esses dados à organização, não tem backend próprio nem telemetria. O tratamento pela API Google depende das condições aplicáveis ao seu projeto.
 
-A extensão envia a chave por HTTPS no cabeçalho `x-goog-api-key` exclusivamente a `generativelanguage.googleapis.com`. Textos selecionados, fragmentos do curso, o contexto do parágrafo e termos do glossário também vão para o Google para gerar a tradução. A organização não recebe esses dados pela extensão. Consulte as condições do serviço Google aplicáveis ao seu projeto antes de enviar conteúdo sensível.
+A máscara esconde os caracteres na interface, mas não criptografa o armazenamento. Quem tem acesso ao perfil do navegador pode inspecionar a chave. A chave nunca é retornada nas mensagens para a página; o background realiza as chamadas. `setAccessLevel` é aplicado quando o navegador oferece essa API; em versões que não a oferecem, os content scripts da própria extensão têm o acesso padrão ao storage, sem disponibilizá-lo ao JavaScript do site.
 
-## Publicação do código
+O cache de traduções fica em `sessionStorage`, limitado em tamanho, e pode ser lido pelo próprio site. Não contém chaves. A restauração de sessão do navegador pode preservar esse cache.
 
-- Distribua somente o código e `config.example.js`. Não inclua `config.js`, arquivos `.env`, perfis do Chrome ou exportações do storage.
-- `.gitignore` evita inclusão acidental; não protege contra `git add -f` nem remove segredos do histórico.
-- Nunca coloque uma chave da organização no pacote público. Conforme a [orientação do Google](https://ai.google.dev/gemini-api/docs/api-key), segredos embutidos em aplicativos cliente podem ser extraídos.
-- Restrinja sua chave à API Gemini, acompanhe as cotas e revogue uma chave que tenha sido exposta. Não publique a chave em issues, PRs ou screenshots.
+## Distribuir sem expor segredos
 
-## Conteúdo e permissões
+O pacote é montado por uma lista explícita de arquivos e não inclui `config.js`, `.env`, perfis, scripts de terminal ou testes. Nenhuma chave deve ser embutida na extensão. `.gitignore` não protege arquivos adicionados à força ou já existentes no histórico.
 
-A extensão atua em `academy.hackthebox.com`. Requisições externas saem pelo background; o content script não recebe a chave. Mensagens de configuração só são aceitas da página do popup da própria extensão. Traduções são tratadas como texto, nunca executadas como HTML ou JavaScript.
+Restrinja a chave à API Gemini, confira cotas e revogue uma chave exposta. [Orientações do Google](https://ai.google.dev/gemini-api/docs/api-key). A chave da conta Mozilla para assinatura é diferente da chave Gemini: mantenha ambas fora do Git.
 
-O cache mantém traduções no `sessionStorage` da aba, limitado por tamanho, e pode ser lido pelo próprio site, como outros dados dessa origem. Não contém a chave. Fechar a sessão da aba normalmente descarta esse cache; a restauração de sessão do navegador pode preservá-lo. Não há backend ou telemetria da organização.
+Traduções são aplicadas como texto, nunca executadas como HTML. Código, comandos, links e eventos são preservados. Mensagens de configuração são aceitas apenas da página do popup da própria extensão.
 
-A proteção contra Google Tradutor detecta sinais do DOM e tenta recuperar o original uma vez por seção. Não controla configurações globais do Chrome e não garante detectar todas as versões de tradutores externos.
+## Relatar problemas
 
-Referência do armazenamento: [documentação do Chrome](https://developer.chrome.com/docs/extensions/reference/api/storage).
-
-## Reportar vulnerabilidades
-
-Use [Report a vulnerability](https://github.com/NexusGuard-Labs/htb-context-translator/security/advisories/new) se o recurso estiver habilitado. Se não estiver, procure o owner sem divulgar credenciais ou detalhes de exploração em uma issue pública. Inclua versão, passos de reprodução e impacto, com dados de teste.
+O relato privado de vulnerabilidades está habilitado. Use [Report a vulnerability](https://github.com/NexusGuard-Labs/htb-pocket-translator/security/advisories/new) ou procure o owner. Não exponha chaves ou dados de cursos em uma issue pública.

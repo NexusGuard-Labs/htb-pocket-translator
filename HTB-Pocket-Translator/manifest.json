@@ -1,15 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "HTB Context Translator",
-  "version": "1.3.1",
-  "description": "Tradutor inteligente especializado em Cibersegurança para o Hack The Box Academy.",
+  "name": "HTB Pocket Translator",
+  "version": "1.0.0",
+  "description": "Tradução contextual pt-BR do HTB Academy no Firefox para Android.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
   "action": {
-    "default_title": "HTB Context Translator",
+    "default_title": "HTB Pocket Translator",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
@@ -18,7 +18,6 @@
     }
   },
   "permissions": [
-    "contextMenus",
     "storage"
   ],
   "host_permissions": [
@@ -26,7 +25,9 @@
     "https://generativelanguage.googleapis.com/*"
   ],
   "background": {
-    "service_worker": "background.js"
+    "scripts": [
+      "background.js"
+    ]
   },
   "content_scripts": [
     {
@@ -51,5 +52,19 @@
       "run_at": "document_idle"
     }
   ],
-  "minimum_chrome_version": "102"
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "htb-pocket-translator@nexusguard-labs",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "authenticationInfo",
+          "websiteContent"
+        ]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
+  }
 }

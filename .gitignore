@@ -33,3 +33,6 @@ dist/
 *.zip
 *.crx
 *.pem
+
+*.xpi
+web-ext-artifacts/

@@ -1,0 +1,21 @@
+name: Falha na tradução ou no Android
+description: Relatar uma falha reproduzível sem compartilhar credenciais.
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: "Não inclua chaves, cookies ou conteúdo privado do curso. Para vulnerabilidades, consulte SECURITY.md."
+  - type: input
+    id: environment
+    attributes:
+      label: Ambiente
+      description: Versão do Android, Firefox e extensão.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Como reproduzir
+      description: Passos, resultado esperado e resultado observado. Use frases próprias se precisar de um exemplo de tradução.
+    validations:
+      required: true
