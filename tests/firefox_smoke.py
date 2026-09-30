@@ -39,6 +39,9 @@ try:
     wait.until(lambda d: 'Glossário salvo' in d.find_element(By.ID, 'api-feedback').text)
     driver.refresh()
     wait.until(lambda d: d.find_element(By.ID, 'glossary-input').get_attribute('value') == 'Ticket Granting Ticket')
+    assert driver.find_element(By.ID, 'auto-translate-toggle').is_selected(), 'Auto-tradução deve começar ativada'
+    if os.environ.get('HTB_SCREENSHOT_PATH'):
+        driver.find_element(By.TAG_NAME, 'body').screenshot(os.environ['HTB_SCREENSHOT_PATH'])
     print('Firefox real: instalação, background, chave mascarada e glossário aprovados.')
 finally:
     driver.quit()

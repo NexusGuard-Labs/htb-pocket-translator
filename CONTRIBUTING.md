@@ -1,158 +1,44 @@
-# Contribuindo para o HTB Context Translator
+# Contribuir
 
-Obrigado pelo interesse em contribuir! Este guia explica como participar do projeto de forma organizada e eficiente.
+Mantenha o foco: tradução automática contextual para pt-BR no Firefox Android, preservando código e a leitura confortável. Faça mudanças em uma branch, teste, commite, envie ao remoto e abra um PR. Não distribua credenciais.
 
----
-
-## 📋 Código de Conduta
-
-Ao contribuir, você concorda em manter um ambiente respeitoso e colaborativo. Seja construtivo, objetivo e profissional.
-
----
-
-## 🐛 Reportando Bugs
-
-1. Verifique se o bug já foi reportado nas [Issues](https://github.com/NexusGuard-Labs/htb-context-translator/issues).
-2. Se não, abra uma nova issue com:
-   - **Título claro e descritivo**
-   - **Passos para reproduzir** o problema
-   - **Comportamento esperado** vs. **comportamento atual**
-   - **Versão da extensão** (visível em `chrome://extensions/`)
-   - **Versão do Chrome**
-   - **Capturas de tela ou logs do console** (se aplicável)
-
----
-
-## 💡 Sugerindo Melhorias
-
-Abra uma issue com a tag `enhancement` descrevendo:
-- O problema ou necessidade que a melhoria resolve.
-- Como você imagina a solução.
-- Alternativas que você considerou.
-
----
-
-## 🔀 Enviando Pull Requests
-
-### Fluxo de trabalho
-
-1. **Fork** o repositório.
-2. **Clone** o seu fork:
-   ```bash
-   git clone https://github.com/SEU_USUARIO/htb-context-translator.git
-   cd htb-context-translator
-   ```
-3. **Crie uma branch** descritiva:
-   ```bash
-   git checkout -b feature/descricao-curta
-   # ou
-   git checkout -b fix/descricao-do-bug
-   ```
-4. **Faça suas alterações** seguindo as convenções abaixo.
-5. **Teste** carregando a extensão localmente no Chrome (`chrome://extensions/` → *Load unpacked*).
-6. **Commite** com mensagem clara:
-   ```bash
-   git commit -m "feat: adiciona cache de traduções por seção"
-   # ou
-   git commit -m "fix: corrige detecção de navegação no módulo de redes"
-   ```
-7. **Push** para o seu fork:
-   ```bash
-   git push origin feature/descricao-curta
-   ```
-8. **Abra um Pull Request** no repositório original.
-
-### Convenção de commits
-
-Usamos o formato [Conventional Commits](https://www.conventionalcommits.org/):
-
-| Prefixo | Uso |
-|---|---|
-| `feat:` | Nova funcionalidade |
-| `fix:` | Correção de bug |
-| `docs:` | Alteração na documentação |
-| `style:` | Formatação (sem mudança de lógica) |
-| `refactor:` | Refatoração de código |
-| `test:` | Adição ou correção de testes |
-| `chore:` | Tarefas de manutenção (dependências, CI, etc.) |
-
----
-
-## 🛡️ Regras de Segurança (Obrigatórias)
-
-> **Violações destas regras resultam na rejeição imediata do PR.**
-
-1. **NUNCA commite chaves de API, tokens, senhas ou credenciais.** Sempre use variáveis de ambiente ou `chrome.storage.local`.
-2. **Verifique antes de cada commit:**
-   ```bash
-   git diff --staged | grep -iE "(api.?key|token|password|secret|AIzaSy)" && echo "⚠️ POSSÍVEL CREDENCIAL DETECTADA" || echo "✅ OK"
-   ```
-3. **O arquivo `config.js` DEVE permanecer no `.gitignore`.** Nunca o remova.
-4. **Não exponha serviços para `0.0.0.0`.** Use sempre `127.0.0.1` ou `localhost`.
-
----
-
-## 🏗️ Estrutura do Código
-
-| Arquivo | Responsabilidade |
-|---|---|
-| `manifest.json` | Configuração da extensão (Manifest V3) |
-| `background.js` | Service Worker: API Gemini, prompt de IA, context menu |
-| `content.js` | Content script: widget, coleta de DOM, aplicação da tradução, navegação SPA |
-| `popup.html/css/js` | Interface do popup (chave de API, auto-tradução) |
-| `styles.css` | Estilos do widget e popup no curso |
-
-### Onde fazer cada tipo de alteração
-
-- **Melhorias no prompt de IA** → `background.js` (constante `SYSTEM_PROMPT`)
-- **Melhorias na detecção de navegação** → `content.js` (funções `checkRoute` e `schedule`)
-- **Novos termos a preservar** → `background.js` (regras contextuais no `SYSTEM_PROMPT`)
-- **Ajustes visuais** → `styles.css` (widget) ou `popup.css` (popup)
-- **Nova funcionalidade no popup** → `popup.html` + `popup.js`
-
----
-
-## ✅ Checklist antes do PR
-
-- [ ] O código funciona localmente no Chrome com a extensão carregada.
-- [ ] Nenhuma chave de API ou credencial está no diff.
-- [ ] A mensagem de commit segue a convenção `tipo: descrição`.
-- [ ] A extensão traduz corretamente uma seção do HTB Academy.
-- [ ] O toggle EN ↔ PT-BR continua funcionando.
-- [ ] O popup abre e funciona corretamente.
-- [ ] O `manifest.json` é um JSON válido.
-
----
-
-## 📝 Estilo de Código
-
-- **JavaScript:** ES2020+, sem TypeScript por enquanto.
-- **Indentação:** 2 espaços.
-- **Strings:** Aspas simples (`'`) para JS, aspas duplas (`"`) para JSON e HTML.
-- **Comentários:** Em português do Brasil, descritivos e concisos.
-- **Variáveis e funções:** `camelCase` em português (ex: `traduzirConteudoDaPagina`, `obterApiKey`).
-
----
-
-Obrigado por contribuir! 💚
-
-## Testes automatizados
+## Testar
 
 ```bash
 npm install
 npx playwright-core install chromium
 npm test
-npm run test:python
+npm run lint:addon
+npm run build
+git diff --check
 ```
 
-Para usar um Chromium já instalado: `CHROME_PATH=/caminho/para/chrome npm test`. Os testes usam um perfil temporário, conteúdo sintético e respostas Gemini simuladas; não carregam seu perfil pessoal nem sua chave. O teste integrado carrega a extensão real e exercita popup, worker e content script.
+`npm test` roda 13 casos no Node/Chromium: lógica compartilhada, navegação, cache, erros, chave, preservação de código, seleção e layout de 320 px. O teste integrado em Chromium adapta apenas o manifesto em uma pasta temporária; o pacote de distribuição continua usando o manifesto Firefox.
 
-Antes de enviar um PR, rode também `git diff --check`. Separe a branch de revisão do checkout usado por outra sessão. Faça commit e push dos conjuntos concluídos; não sobrescreva mudanças concorrentes.
+Para um Chromium já instalado: `CHROME_PATH=/caminho/chrome npm test`.
 
-### Avaliação opcional do prompt com Gemini real
+## Firefox real
+
+Instale Firefox, geckodriver e Selenium para Python (`python3 -m pip install selenium` em ambiente virtual). Depois:
+
+```bash
+GECKODRIVER=/caminho/geckodriver npm run test:firefox
+```
+
+Usa perfil temporário, instala o XPI sem assinatura temporariamente e verifica background, popup, chave mascarada e glossário persistido. Não usa seu perfil pessoal. Execute como usuário normal da sessão gráfica, não como root.
+
+Teste no telefone conectado: veja [INSTRUCTIONS.md](INSTRUCTIONS.md). Validação em Firefox desktop e viewport pequeno não equivale a teste em Android físico.
+
+## Prompt
+
+`tests/prompt-cases.json` contém cinco exemplos sintéticos. O avaliador opcional usa a API real e consome cota:
 
 ```bash
 HTB_CONFIG_FILE=/caminho/privado/config.js node tests/evaluate-prompt.cjs
 ```
 
-Consome cota da sua chave e envia somente cinco exemplos sintéticos de `tests/prompt-cases.json`. Verifica termos essenciais e confusões conhecidas (proxy reverso/forward proxy); leia as respostas para avaliar fluência e sentido. Não publique seu `config.js`.
+Esse arquivo de teste local deve definir `const CONFIG = { GEMINI_API_KEY: 'sua chave' };` e ficar fora do Git. O aplicativo móvel usa exclusivamente o popup para configurar a chave. O teste verifica termos essenciais, e a revisão humana deve avaliar naturalidade e sentido.
+
+## Pacote e assinatura
+
+`package_addon.py` usa apenas a biblioteca padrão do Python e uma lista explícita de arquivos. O XPI gerado em `dist/` não é assinado. A assinatura e a distribuição são feitas pela conta Mozilla da organização, conforme [INSTRUCTIONS.md](INSTRUCTIONS.md).

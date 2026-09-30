@@ -34,7 +34,7 @@ Este Código de Conduta se aplica tanto nos espaços do projeto quanto em espaç
 
 ## Aplicação
 
-Instâncias de comportamento abusivo, de assédio ou de outra forma inaceitável podem ser reportadas entrando em contato com o mantenedor do projeto. Todas as reclamações serão revisadas e investigadas, resultando em uma resposta considerada necessária e apropriada às circunstâncias.
+Instâncias de comportamento abusivo, de assédio ou de outra forma inaceitável podem ser reportadas entrando em contato com o owner [Mid-night2026](https://github.com/Mid-night2026), responsável pela manutenção na [NexusGuard-Labs](https://github.com/NexusGuard-Labs). Todas as reclamações serão revisadas e investigadas, resultando em uma resposta considerada necessária e apropriada às circunstâncias.
 
 ## Atribuição
 
